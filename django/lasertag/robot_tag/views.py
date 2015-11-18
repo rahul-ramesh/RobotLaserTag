@@ -18,7 +18,7 @@ def map(request):
 
 def add(request,coords):
 	coords = int(coords, 10)
-        latest_coords = Coords(name="robot_name", x=coords/100, y=coords%100)
+        latest_coords = Coords(name="robot_name", x=coords/1000, y=coords%1000)
         latest_coords.save()
         # Always return an HttpResponseRedirect after successfully dealing
         # with POST data. This prevents data from being posted twice if a
