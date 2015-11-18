@@ -7,8 +7,8 @@ from django.core.urlresolvers import reverse
 
 def index(request):
 	coords = Coords.objects.order_by('-id')[:1]
-	context = {'coords' : coords}
-	print coords
+	context = {'coords' : str(coords)}
+	#print coords
 	return render(request, 'coords.html', context)
 
 def map(request):

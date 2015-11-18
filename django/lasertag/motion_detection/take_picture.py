@@ -10,17 +10,20 @@ import urllib
 import time
 
 def main():
-	while true:
+	while (1):
 		location = analyze()
 		print location
 		#send to server
-		#urllib.urlopen("http://127.0.0.1:8000/robot_tag/" + str(location[0]).zfill(3) + str(location[1]).zfill(3) + "/add/)
+		if location == []:
+			continue
+		urllib.urlopen("http://192.168.43.130:80/robot_tag/" + str(location[0]).zfill(3) + str(location[1]).zfill(3) + "/add/")
 		time.sleep(1)
+
 def analyze():
-	os.system("streamer -c /dev/video1 -f jpeg -o map.jpg")
-	img_rgb = cv2.imread('map.jpg')
+	os.system("streamer -c /dev/video1 -o map.jpeg")
+	img_rgb = cv2.imread('map.jpeg')
 	img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
-	template = cv2.imread('roomba_core.jpg',0)
+	template = cv2.imread('roomba_core.jpeg',0)
 	w, h = template.shape[::-1]
 
 	res = cv2.matchTemplate(img_gray,template,cv2.TM_CCOEFF_NORMED)

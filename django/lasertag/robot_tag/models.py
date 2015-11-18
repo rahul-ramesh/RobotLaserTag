@@ -16,8 +16,8 @@ class Coords(models.Model):
 	y = models.IntegerField(default = 0)
 
 	def __str__(self):
-		return '' + str(self.x) + ' ' + str(self.y)  + ' ' + self.name
-
+		return str(self.x) + ' ' + str(self.y) + ' '
+	
 class Fault(models.Model):
 	fault_type = models.IntegerField(default = 1)
 	victim = models.IntegerField(default=1)
