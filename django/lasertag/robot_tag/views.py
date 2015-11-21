@@ -5,10 +5,12 @@ from django.core.urlresolvers import reverse
 
 # Create your views here.
 
-def index(request):
-	coords = Coords.objects.order_by('-id')[:1]
-	context = {'coords' : str(coords)}
-	#print coords
+def coords(request):
+	coords1 = Coords.objects.filter(team = 1).order_by('-id')[:1] #order_by('-id')[:1]
+	coords2 = Coords.objects.filter(team = 2).order_by('-id')[:1]
+	angle1 = Angle.objects.filter(team = 1).order_by('-id')[:1] #order_by('-id')[:1]
+	angle2 = Angle.objects.filter(team = 2).order_by('-id')[:1]
+	context = {'coords1' : str(coords1), 'coords2' : str(coords2), 'angle1' : str(angle1), 'angle2' : str(angle2)}
 	return render(request, 'coords.html', context)
 
 def map(request):
@@ -16,11 +18,14 @@ def map(request):
 	context = {'map_list' : map_list}
 	return render(request, 'map.html', context)
 
-def add(request,coords):
+def add_coords(request, coords, name):
 	coords = int(coords, 10)
-        latest_coords = Coords(name="robot_name", x=coords/1000, y=coords%1000)
+        latest_coords = Coords(name, coords/1000, coords%1000)
         latest_coords.save()
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
-        return HttpResponseRedirect(reverse('index'))
+        return HttpResponseRedirect(reverse('coords'))
+
+def add_angle(request, angle, name):
+        latest_angles = Angle(name, angle)
+        latest_angles.save()
+        return HttpResponseRedirect(reverse('coords'))
+
