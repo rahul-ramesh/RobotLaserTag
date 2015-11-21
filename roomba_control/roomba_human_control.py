@@ -27,7 +27,6 @@ def getDecodedBytes(connection, n, fmt):
         return struct.unpack(fmt, connection.read(n))[0]
     except serial.SerialException:
         print "Lost connection"
-        tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
         connection = None
         return None
     except struct.error:
@@ -54,6 +53,7 @@ def main:
 	
 	#create map 2d array
 	dir = 0
+    ang = 0;
 	map = []
 	for i in range(0, 300):
 		row = []
@@ -69,6 +69,7 @@ def main:
 	loc_ip = "http://:80"
 	cmd_ip = "http://:80"
 	fire_ip = "http://:80"
+    ang_ip = "http://:80"
 
 	#connet to roomba
 	port = "/dev/ttyUSB0"
@@ -87,6 +88,12 @@ def main:
 		#get commands from server
 		resp, content h.request(cmd_ip)
 		sendCommand(connection, content)
+
+        #get angle and send it to the server
+        connection.write(connection, '20')
+        angChange = get16signed(connection)
+        ang = ang + angChange
+        resp, content = h.request(ang_ip)
 
 		time.sleep(.1)
 		sendCommand('145 0 0 0 0', connection)
