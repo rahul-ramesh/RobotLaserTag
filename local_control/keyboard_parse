@@ -1,8 +1,8 @@
 # The getch method can determine which key has been pressed
 # by the user on the keyboard by accessing the system files
 # It will then return the pressed key as a variable
-def getch():
-    fd = sys.stdin.fileno()
+def getch(): 
+	fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(sys.stdin.fileno())
@@ -11,12 +11,13 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+
 def main():
 
 	#connect to server
 	h = httplib2.Http(".cache")
 	cmd_ip = "http://:80"
-
+	
 
 	while True:
 		#get input
@@ -26,21 +27,22 @@ def main():
 		#parse input into command
 
 		#if up 
-		if(charIn):
-			cmd = '145 0 0 0 0'
+		if(charIn == 'UP'):
+			cmd = '145 1 244 1 244'
 
 		#if down
-		if(charIn):
-			cmd = '145 0 0 0 0'
+		if(charIn == 'DOWN'):
+			cmd = '145 254 12 254 12'
 			
 		#if left
-		if(charIn):
-			cmd = '145 0 0 0 0'
+		if(charIn == 'LEFT'):
+			cmd = '145 1 244 254 12'
 			
 		#if right
-		if(charIn):
-			cmd = '145 0 0 0 0'
+		if(charIn == 'RIGHT'):
+			cmd = '145 254 12 1 244'
 			
+		print cmd
 		h.request(cmd_ip + cmd)
 
 main

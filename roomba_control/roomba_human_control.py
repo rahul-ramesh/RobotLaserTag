@@ -1,7 +1,8 @@
 import httplib2
 import math
 import time
-import numpy as np     
+import numpy as np 
+import RPi.GPIO as GPIO    
 
 def sendCommand(connection, command):
     cmd = ""
@@ -11,11 +12,44 @@ def sendCommand(connection, command):
     if(cmd == "fire"):
     	#TODO make sure proper syntax for POST request
     	h.request(fire_ip)
+    	GPIO.output(18, true)
+    	time.sleep(.5)
+    	GPIO.output(18, false)
     
     else:
     	connection.write(cmd)
 
+# getDecodedBytes returns a n-byte value decoded using a format string.
+# Whether it blocks is based on how the connection was set up.
+def getDecodedBytes(connection, n, fmt):
+    
+    try:
+        return struct.unpack(fmt, connection.read(n))[0]
+    except serial.SerialException:
+        print "Lost connection"
+        tkMessageBox.showinfo('Uh-oh', "Lost connection to the robot!")
+        connection = None
+        return None
+    except struct.error:
+        print "Got unexpected data from serial port."
+        return None
 
+# get8Unsigned returns an 8-bit unsigned value.
+def get8Unsigned(connection):
+    return getDecodedBytes(connection, 1, "B")
+
+# get8Signed returns an 8-bit signed value.
+def get8Signed(connection):
+    return getDecodedBytes(connection, 1, "b")
+
+# get16Unsigned returns a 16-bit unsigned value.
+def get16Unsigned(connection):
+    return getDecodedBytes(connection, 2, ">H")
+
+# get16Signed returns a 16-bit signed value.
+def get16Signed(connection):
+    return getDecodedBytes(connection, 2, ">h")
+        
 def main:
 	
 	#create map 2d array
@@ -26,6 +60,9 @@ def main:
 		for j in range(0, 300):
 			row.append(0)
 		map.append(row)
+
+	#setup GPIO pin
+	GPIO.setup(18, GPIO.out)
 
 	#setup server connection
 	h = httplib2.Http(".cache")
@@ -52,6 +89,7 @@ def main:
 		sendCommand(connection, content)
 
 		time.sleep(.1)
+		sendCommand('145 0 0 0 0', connection)
 
 
 main
