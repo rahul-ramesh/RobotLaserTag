@@ -21,8 +21,8 @@ def getch():
 def main():
 
 	#connect to server
-	#h = httplib2.Http(".cache")
-    #cmd_ip = "http://:80"
+	h = httplib2.Http(".cache")
+    cmd_ip = "http://:8000/robot_tag/1/"
 	
 
     while True:
@@ -53,7 +53,7 @@ def main():
             cmd = charIn
 
         print "cmd: " + cmd
-		#h.request(cmd_ip + cmd)
+		h.request(cmd_ip + cmd + "/add_command/")
 
 main()
 

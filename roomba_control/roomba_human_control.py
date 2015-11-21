@@ -66,10 +66,10 @@ def main:
 
 	#setup server connection
 	h = httplib2.Http(".cache")
-	loc_ip = "http://:80"
-	cmd_ip = "http://:80"
-	fire_ip = "http://:80"
-    ang_ip = "http://:80"
+	loc_ip = "http://:8000/robot_tag/1/coords/"
+	cmd_ip = "http://:8000/robot_tag/1/command/"
+	fire_ip = "http://:8000/robot_tag/1/fire/"
+    ang_ip = "http://:8000/robot_tag/1/"
 
 	#connet to roomba
 	port = "/dev/ttyUSB0"
@@ -93,7 +93,7 @@ def main:
         connection.write(connection, '20')
         angChange = get16signed(connection)
         ang = ang + angChange
-        resp, content = h.request(ang_ip)
+        resp, content = h.request(ang_ip + ang + "/add_angles/")
 
 		time.sleep(.1)
 		sendCommand('145 0 0 0 0', connection)
