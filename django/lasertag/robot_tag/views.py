@@ -38,8 +38,8 @@ def command(request, team):
 	return render(request, 'command.html', context)
 
 def add_command(request, team, command):
-	c = (''.join(command.split("s")))
-        latest_command = Command(team=team, command=int(c,10))
+	#c = (''.join(command.split("s")))
+        latest_command = Command(team=team, command)
         latest_command.save()
         return HttpResponseRedirect(reverse('index'))
 
