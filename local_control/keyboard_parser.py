@@ -21,7 +21,7 @@ def main():
 
 	#connect to server
 	h = httplib2.Http(".cache")
-	cmd_ip = "http://192.168.43.130:8000/robot_tag/1/add_command/"
+	cmd_ip = "http://0.0.0.0:8000/robot_tag/1/add_command/"
 	
 
 	while True:

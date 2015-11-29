@@ -72,11 +72,15 @@ def main:
 
 	#setup server connection
 	h = httplib2.Http(".cache")
-	loc_ip = "http://192.168.43.130:8000/robot_tag/1/coords/"
-	add_coords_ip = "http://192.168.43.130:8000/robot_tag/1/add_coords/"
-	cmd_ip = "http://192.168.43.130:8000/robot_tag/1/command/"
-	fire_ip = "http://192.168.43.130:8000/robot_tag/1/fire/"
-    ang_ip = "http://192.168.43.130:8000/robot_tag/1/add_angles/"
+	
+	ip_addr = "http://0.0.0.0:8000/robot_tag/"
+	team = "1"
+
+	loc_ip = ip_addr + team +"/coords/"
+	add_coords_ip = ip_addr + team + "/add_coords/"
+	cmd_ip = ip_addr + team + "/command/"
+	fire_ip = ip_addr + team + "/fire/"
+	ang_ip = ip_addr + team + "/add_angles/"
 
 	#connet to roomba
 	port = "/dev/ttyUSB0"
