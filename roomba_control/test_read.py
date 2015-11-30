@@ -4,16 +4,13 @@ import time
 import numpy as np 
 import nanotime
 import serial
-import RPi.GPIO as GPIO    
+import struct
 
 def sendCommand(connection, command):
     cmd = ""
     write = False
 
     cmds = command.split()
-    if(cmds[0] != '145' or cmds[0] != 'fire'):
-    	connection.write('143')
-    	return
 
     for v in cmds:
         if(cmd == "fire"):
@@ -32,7 +29,10 @@ def sendCommand(connection, command):
 def getDecodedBytes(connection, n, fmt):
     
     try:
-        return struct.unpack(fmt, connection.read(n))[0]
+    	print "Getting encoded bytes..."
+    	read = connection.read(n)
+    	print "Read: " + read
+        return struct.unpack(fmt, read)[0]
     except serial.SerialException:
         print "Lost connection"
         connection = None
@@ -59,17 +59,6 @@ def get16Signed(connection):
         
 def main():
 	
-	#create map 2d array
-	dir = 0
-	ang = 0
-	loc = [0,0]
-	map = []
-	for i in range(0, 300):
-		row = []
-		for j in range(0, 300):
-			row.append(0)
-		map.append(row)
-
 
 	#setup server connection
 	h = httplib2.Http(".cache")
@@ -84,48 +73,17 @@ def main():
 	ang_ip = ip_addr + team + "/add_angles/"
 
 	#connet to roomba
-	port = "/dev/ttyUSB0"
+	port = "/dev/tty.usbserial-DA01NZOS"
 	connection = serial.Serial(port, baudrate=115200, timeout = 1)
 	sendCommand(connection, '128 131')
 
 
 	#Decided how to move the robot
-	last_command = None
-	loops = 0
 	while True:
 		
-		#get position from the server and parse position
-		resp, content = h.request(loc_ip)
-		coords = content.split()
-		loc = [int(coords[1]), int(coords[2])]
-
-		#get commands from server
-		resp, content = h.request(cmd_ip)
-		cmds = content.split()
-		if(cmds[2] > served):
-			served = cmds[2]
-			sendCommand(connection, cmds[1])
-
-
-			#calculate expected position
-			#begin with calculating time
-			if(last_command != None):
-				loops = 0
-				cmd = last_command.split('s')
-				if(cmd == 'fire'):
-					break
-				right_vel = int(cmd[1]) << 8 + int(cmd[2])  
-				left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
-				expected_loc[0] = (1) * loops 
-				expected_loc[1] = (1) * loops
-
-        #get angle and send it to the server
-		#connection.write(connection, '20')
-        #angChange = get16signed(connection)
-        #ang = ang + angChange
-        #resp, content = h.request(ang_ip + ang + '/')
-        loops = loops + 1
-		time.sleep(.1)
+		sendCommand(connection, '43')
+		left = get16Unsigned(connection)
+		time.sleep(1)
 
 
 main()
