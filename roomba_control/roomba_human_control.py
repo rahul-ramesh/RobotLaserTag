@@ -10,13 +10,13 @@ def sendCommand(connection, command):
     cmd = ""
     write = False
 
-    cmds = command.split()
-    if(cmds[0] != '145' or cmds[0] != 'fire'):
-    	connection.write('143')
+    cmds = command.split('s')
+    if(cmds[0] != '145' and cmds[0] != 'fire' and cmds[0] != '128'):
+    	connection.write(chr(int('143')))
     	return
 
     for v in cmds:
-        if(cmd == "fire"):
+        if(v == "fire"):
     		h.request(fire_ip)
         	
         else:
@@ -86,12 +86,12 @@ def main():
 	#connet to roomba
 	port = "/dev/ttyUSB0"
 	connection = serial.Serial(port, baudrate=115200, timeout = 1)
-	sendCommand(connection, '128 131')
+	sendCommand(connection, '128s131')
 
 
 	#Decided how to move the robot
 	last_command = None
-	loops = 0
+	served = 0
 	while True:
 		
 		#get position from the server and parse position
@@ -116,15 +116,21 @@ def main():
 					break
 				right_vel = int(cmd[1]) << 8 + int(cmd[2])  
 				left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
-				expected_loc[0] = (1) * loops 
-				expected_loc[1] = (1) * loops
+				if(right_vel == 0 or left_vel == 0):
+					expected_loc[0] = loc[0]
+					expected_loc[1] = loc[1]
+				expected_loc[0] = (1) 
+				expected_loc[1] = (1)
+
+			last_command = cmds[1]
+		else:
+			sendCommand(connection, '145s0s0s0s0')
 
         #get angle and send it to the server
 		#connection.write(connection, '20')
         #angChange = get16signed(connection)
         #ang = ang + angChange
         #resp, content = h.request(ang_ip + ang + '/')
-        loops = loops + 1
 		time.sleep(.1)
 
 
