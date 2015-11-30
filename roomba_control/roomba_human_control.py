@@ -104,6 +104,7 @@ def main():
 		cmds = content.split()
 		if(cmds[2] > served):
 			served = cmds[2]
+			sendCommand(connection, '128s131')
 			sendCommand(connection, cmds[1])
 
 
