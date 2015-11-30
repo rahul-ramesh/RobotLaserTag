@@ -58,8 +58,8 @@ def main:
 	
 	#create map 2d array
 	dir = 0
-    ang = 0
-    loc = [0,0]
+	ang = 0
+	loc = [0,0]
 	map = []
 	for i in range(0, 300):
 		row = []
@@ -111,14 +111,14 @@ def main:
 
 		sendCommand(connection, content)
 
-        #get angle and send it to the server
-        connection.write(connection, '20')
-        angChange = get16signed(connection)
-        ang = ang + angChange
-        resp, content = h.request(ang_ip + ang + '/')
+        	#get angle and send it to the server
+		connection.write(connection, '20')
+        	angChange = get16signed(connection)
+        	ang = ang + angChange
+        	resp, content = h.request(ang_ip + ang + '/')
 
-		time.sleep(.1)
+		time.sleep(.05)
 		sendCommand('145 0 0 0 0', connection)
 
 
-main
+main()
