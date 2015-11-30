@@ -74,7 +74,7 @@ def main():
 	#setup server connection
 	h = httplib2.Http(".cache")
 	
-	ip_addr = "http://0.0.0.0:8000/robot_tag/"
+	ip_addr = "http://192.168.43.55:8000/robot_tag/"
 	team = "1"
 
 	loc_ip = ip_addr + team +"/coords/"
@@ -119,8 +119,9 @@ def main():
 				if(right_vel == 0 or left_vel == 0):
 					expected_loc[0] = loc[0]
 					expected_loc[1] = loc[1]
-				expected_loc[0] = (1) 
-				expected_loc[1] = (1)
+				else:
+					expected_loc[0] = (1) 
+					expected_loc[1] = (1)
 
 			last_command = cmds[1]
 		else:
