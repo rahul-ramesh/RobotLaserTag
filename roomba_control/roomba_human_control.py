@@ -7,6 +7,11 @@ import serial
 import RPi.GPIO as GPIO    
 
 def sendCommand(connection, command):
+	global h
+
+	ip_addr = "http://192.168.43.55:8000/robot_tag/"
+	team = "1"
+	fire_ip = ip_addr + team + "/fire/"
     cmd = ""
     write = False
 
@@ -58,7 +63,8 @@ def get16Signed(connection):
     return getDecodedBytes(connection, 2, ">h")
         
 def main():
-	
+	global h
+
 	#create map 2d array
 	dir = 0
 	ang = 0
@@ -92,6 +98,8 @@ def main():
 	#Decided how to move the robot
 	last_command = None
 	served = 0
+	expected_loc = [0,0]
+	last_time = nanotime.now()
 	while True:
 		
 		#get position from the server and parse position
@@ -103,6 +111,7 @@ def main():
 		resp, content = h.request(cmd_ip)
 		cmds = content.split()
 		if(cmds[2] > served):
+			last_time = nanotime.now()
 			served = cmds[2]
 			sendCommand(connection, '128s131')
 			sendCommand(connection, cmds[1])
@@ -113,8 +122,8 @@ def main():
 			if(last_command != None):
 				loops = 0
 				cmd = last_command.split('s')
-				if(cmd == 'fire'):
-					break
+				if(len(cmd) < 5):
+					continue
 				right_vel = int(cmd[1]) << 8 + int(cmd[2])  
 				left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
 				if(right_vel == 0 or left_vel == 0):
@@ -128,11 +137,10 @@ def main():
 		else:
 			sendCommand(connection, '145s0s0s0s0')
 
-        #get angle and send it to the server
-		#connection.write(connection, '20')
-        #angChange = get16signed(connection)
-        #ang = ang + angChange
-        #resp, content = h.request(ang_ip + ang + '/')
+        
+        #check for timeout
+        if((nanotime.now() - last_time)).seconds() > 15):
+			sendCommand('143')
 		time.sleep(.1)
 
 
