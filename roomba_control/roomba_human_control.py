@@ -7,30 +7,49 @@ import serial
 import RPi.GPIO as GPIO    
 
 def sendCommand(connection, command):
-	global h
+	global h, fault
 
 	ip_addr = "http://192.168.43.55:8000/robot_tag/"
 	team = "1"
 	fire_ip = ip_addr + team + "/fire/"
     cmd = ""
-    write = False
 
     cmds = command.split('s')
-    if(cmds[0] != '145' and cmds[0] != 'fire' and cmds[0] != '128'):
-    	connection.write(chr(int('143')))
-    	return
+    if(cmds[0] == '145'):
+    	if(fault = None):
+    		for v in cmds:
+    			cmd += chr(int(v))
+    	else:
+    		cmd += chr(int(cmds[0]))
+    		if(fault[0] == 'left'):
+    			cmd += chr(int(cmds[1]))
+    			cmd += chr(int(cmds[2]))
+    			vel = int(int(cmds[3]) << 8 + int(cmds[4]) * fault[1])
+    			cmd += chr(vel >> 8)
+    			cmd += chr(vel % 256)
 
-    for v in cmds:
-        if(v == "fire"):
-    		h.request(fire_ip)
-        	
-        else:
-        	write = True
+    		else:
+    			vel = int(int(cmds[1]) << 8 + int(cmds[2]) * fault[1])
+    			cmd += chr(vel >> 8)
+    			cmd += chr(vel % 256)
+    			cmd += chr(int(cmds[3]))
+    			cmd += chr(int(cmds[4]))
+
+    elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
+        for v in cmds:
         	cmd += chr(int(v))
-    	
 
-    if(write):
-    	connection.write(cmd)
+    elif(cmds[0] == 'fire'):
+        h.request(fire_ip)
+        return 
+
+    else:
+    	connection.write(chr(143))
+        return
+
+    connection.write(cmd)
+
+
 
 # getDecodedBytes returns a n-byte value decoded using a format string.
 # Whether it blocks is based on how the connection was set up.
@@ -61,21 +80,46 @@ def get16Unsigned(connection):
 # get16Signed returns a 16-bit signed value.
 def get16Signed(connection):
     return getDecodedBytes(connection, 2, ">h")
-        
+      
+def distanceBetween(loc, expected_loc):
+	return math.hypot(expected_loc[0] - loc[0], expected_loc[1] - loc[1])
+
+def findFault(loc, expected_loc, prev_loc, command):
+	if(command == None):
+		return None, 0
+	vec_loc = np.array(loc)
+	vec_expected_loc = np.array(expected_loc)
+	vec_prev_loc = np.array(prev_loc)
+	vec_expected = vec_expected_loc - vec_prev_loc
+	vec_real = vec_loc - vec_prev_loc
+	angle = math.degrees(math.acos(np.dot(vec_real, vec_expected)/(np.linalg.norm(vec_real) * np.linalg.norm(vec_expected))))
+	broken_wheel = 'right' if (0 < angle < 90 or 180 < angle < 270) else 'left'
+	percent_lost = (angle % 90) * (10.0/9.0)
+	return broken_wheel, percent_lost
+
+def adjustCommand(command, broken_wheel, percent_lost):
+	faulty_cmd = command.split('s')
+	right_vel = int(faulty_cmd[1]) << 8 + int(faulty_cmd[2])  
+	left_vel  = int(faulty_cmd[3]) << 8 + int(faulty_cmd[4]) 
+	right_hi = faulty_cmd[1]
+	right_lo = faulty_cmd[2] 
+	left_hi  = faulty_cmd[3]
+	left_lo  = faulty_cmd[4] 
+	if(broken_wheel == 'right'):
+		fixed_left_vel = int(percent_lost * left_vel)
+		left_hi = fixed_left_vel >> 8
+		left_lo = fixed_left_vel % 256
+	elif(broken_wheel == 'left'):
+		fixed_right_vel = int(percent_lost * right_vel)
+		right_hi = fixed_right_vel >> 8
+		right_lo = fixed_right_vel % 256
+	else:
+		return command 
+	cmd = '145s' + right_hi + 's' + right_lo + 's' + left_hi + 's' + left_lo 
+	return cmd
+
 def main():
-	global h
-
-	#create map 2d array
-	dir = 0
-	ang = 0
-	loc = [0,0]
-	map = []
-	for i in range(0, 300):
-		row = []
-		for j in range(0, 300):
-			row.append(0)
-		map.append(row)
-
+	global h, fault
 
 	#setup server connection
 	h = httplib2.Http(".cache")
@@ -88,6 +132,7 @@ def main():
 	cmd_ip = ip_addr + team + "/command/"
 	fire_ip = ip_addr + team + "/fire/"
 	ang_ip = ip_addr + team + "/add_angles/"
+	fault_ip = ip_addr + team + "/faults/"
 
 	#connet to roomba
 	port = "/dev/ttyUSB0"
@@ -95,53 +140,86 @@ def main():
 	sendCommand(connection, '128s131')
 
 
-	#Decided how to move the robot
+	#initialize logic variables	
 	last_command = None
-	served = 0
+	bad_wheel = None
+	fault = None
+	percent_lost = 0
+	served_cmd = 0
+	served_fault = 0
 	expected_loc = [0,0]
 	last_time = nanotime.now()
+	angle = 0
+	loc = [0,0]
+	#TODO: How many cm's to a map unit
+	scale = .7
+
+	#Decided how to move the robot
 	while True:
 		
 		#get position from the server and parse position
 		resp, content = h.request(loc_ip)
 		coords = content.split()
+		prev_loc = loc
 		loc = [int(coords[1]), int(coords[2])]
+
+		#check for any discepency in expected position
+		if(distanceBetween(loc, expected_loc) > 5):
+			print "Found fault! Expected: " 
+			print expected_loc 
+			print "But got: "
+			print loc
+			sendCommand(connection, '141 1')
+			bad_wheel, percent_lost = findFault(loc, expected_loc, prev_loc, last_command)			
+
+		#get fault from server
+		resp, contents = h.request(fault_ip);
+		faults = contents.split()
+		if(faults[3] > served_fault):
+			served_fault = faults[3]
+			fault = [faults[1], int(faults[2])]
+
 
 		#get commands from server
 		resp, content = h.request(cmd_ip)
 		cmds = content.split()
-		if(cmds[2] > served):
+		if(cmds[2] > served_cmd):
 			last_time = nanotime.now()
-			served = cmds[2]
+			served_cmd = cmds[2]
 			sendCommand(connection, '128s131')
-			sendCommand(connection, cmds[1])
-
+			sendCommand(connection, adjustCommand(cmds[1], broken_wheel, percent_lost))
+			last_command = cmds[1]
 
 			#calculate expected position
 			#begin with calculating time
-			if(last_command != None):
-				loops = 0
-				cmd = last_command.split('s')
-				if(len(cmd) < 5):
-					continue
-				right_vel = int(cmd[1]) << 8 + int(cmd[2])  
-				left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
-				if(right_vel == 0 or left_vel == 0):
-					expected_loc[0] = loc[0]
-					expected_loc[1] = loc[1]
-				else:
-					expected_loc[0] =  
-					expected_loc[1] = 
+			cmd = cmds[1].split('s')
+			if(len(cmd) < 5):
+				continue
+			right_vel = int(cmd[1]) << 8 + int(cmd[2])  
+			left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
+			if(right_vel == left_vel):
+				forward = 1 if(reight_vel == 500) else -1
+				expected_loc[0] = int(round(loc[0] + forward * math.cos(math.radians(angle)) * 5 * scale))
+				expected_loc[1] = int(round(loc[1] + forward * math.sin(math.radians(angle)) * 5 * scale))
+			else:
+				expected_loc[0] = loc[0]
+				expected_loc[1] = loc[1]
 
-			last_command = cmds[1]
 		else:
 			sendCommand(connection, '145s0s0s0s0')
 
+		#update angle
+		sendCommand(connection, '142 20')
+		ang_change = get16Signed(connection)
+		#TODO: can this be negative? Does that matter?
+		angle = (angle + ang_change) % 360
+		#TODO: make sure angle is formated as 3 digit number
+		h.request(ang_ip + str(angle) + '/')
+
         
         #check for timeout
-        time_taken = (nanotime.now() - last_time).seconds()
-        print time_taken
-        if(time_taken > 15):
+        time_taken = (nanotime.now() - last_time).minutes()
+        if(time_taken > 5):
         	last_time = nanotime.now()
 			sendCommand(connection, '143')
 		time.sleep(.1)
