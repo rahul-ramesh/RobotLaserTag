@@ -4,7 +4,7 @@ import time
 import numpy as np 
 import nanotime
 import serial
-import RPi.GPIO as GPIO    
+#import RPi.GPIO as GPIO    
 
 def sendCommand(connection, command):
 	global h, fault
@@ -12,42 +12,42 @@ def sendCommand(connection, command):
 	ip_addr = "http://192.168.43.55:8000/robot_tag/"
 	team = "1"
 	fire_ip = ip_addr + team + "/fire/"
-    cmd = ""
+	cmd = ""
 
-    cmds = command.split('s')
-    if(cmds[0] == '145'):
-    	if(fault = None):
-    		for v in cmds:
-    			cmd += chr(int(v))
-    	else:
-    		cmd += chr(int(cmds[0]))
-    		if(fault[0] == 'left'):
-    			cmd += chr(int(cmds[1]))
-    			cmd += chr(int(cmds[2]))
-    			vel = int(int(cmds[3]) << 8 + int(cmds[4]) * fault[1])
-    			cmd += chr(vel >> 8)
-    			cmd += chr(vel % 256)
-
+	cmds = command.split('s')
+	if(cmds[0] == '145'):
+		if(fault == None):
+			for v in cmds:
+    				cmd += chr(int(v))
     		else:
-    			vel = int(int(cmds[1]) << 8 + int(cmds[2]) * fault[1])
-    			cmd += chr(vel >> 8)
-    			cmd += chr(vel % 256)
-    			cmd += chr(int(cmds[3]))
-    			cmd += chr(int(cmds[4]))
+    			cmd += chr(int(cmds[0]))
+    			if(fault[0] == 'left'):
+    				cmd += chr(int(cmds[1]))
+    				cmd += chr(int(cmds[2]))
+    				vel = int(int(cmds[3]) << 8 + int(cmds[4]) * fault[1])
+    				cmd += chr(vel >> 8)
+    				cmd += chr(vel % 256)
 
-    elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
-        for v in cmds:
-        	cmd += chr(int(v))
+    			else:
+    				vel = int(int(cmds[1]) << 8 + int(cmds[2]) * fault[1])
+    				cmd += chr(vel >> 8)
+    				cmd += chr(vel % 256)
+    				cmd += chr(int(cmds[3]))
+    				cmd += chr(int(cmds[4]))
 
-    elif(cmds[0] == 'fire'):
-        h.request(fire_ip)
-        return 
+    	elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
+        	for v in cmds:
+        		cmd += chr(int(v))
 
-    else:
-    	connection.write(chr(143))
-        return
+    	elif(cmds[0] == 'fire'):
+        	h.request(fire_ip)
+        	return 
 
-    connection.write(cmd)
+    	else:
+    		connection.write(chr(143))
+       		return
+
+	connection.write(cmd)
 
 
 
@@ -217,10 +217,10 @@ def main():
 		h.request(ang_ip + str(angle) + '/')
 
         
-        #check for timeout
-        time_taken = (nanotime.now() - last_time).minutes()
-        if(time_taken > 5):
-        	last_time = nanotime.now()
+        	#check for timeout
+        	time_taken = (nanotime.now() - last_time).minutes()
+        	if(time_taken > 5):
+        		last_time = nanotime.now()
 			sendCommand(connection, '143')
 		time.sleep(.1)
 
