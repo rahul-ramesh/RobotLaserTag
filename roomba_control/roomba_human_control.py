@@ -130,8 +130,8 @@ def main():
 					expected_loc[0] = loc[0]
 					expected_loc[1] = loc[1]
 				else:
-					expected_loc[0] = (1) 
-					expected_loc[1] = (1)
+					expected_loc[0] =  
+					expected_loc[1] = 
 
 			last_command = cmds[1]
 		else:
@@ -139,8 +139,11 @@ def main():
 
         
         #check for timeout
-        if((nanotime.now() - last_time)).seconds() > 15):
-			sendCommand('143')
+        time_taken = (nanotime.now() - last_time).seconds()
+        print time_taken
+        if(time_taken > 15):
+        	last_time = nanotime.now()
+			sendCommand(connection, '143')
 		time.sleep(.1)
 
 

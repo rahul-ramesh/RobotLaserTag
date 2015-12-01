@@ -31,7 +31,6 @@ def getDecodedBytes(connection, n, fmt):
     try:
     	print "Getting encoded bytes..."
     	read = connection.read(n)
-    	print "Read: " + read
         return struct.unpack(fmt, read)[0]
     except serial.SerialException:
         print "Lost connection"
@@ -81,8 +80,9 @@ def main():
 	#Decided how to move the robot
 	while True:
 		
-		sendCommand(connection, '43')
-		left = get16Unsigned(connection)
+		sendCommand(connection, '142 20')
+		left = get16Signed(connection)
+		print "Read: " + str(left)
 		time.sleep(1)
 
 
