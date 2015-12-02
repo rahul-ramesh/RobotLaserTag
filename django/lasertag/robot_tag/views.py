@@ -81,8 +81,9 @@ def faults(request, team):
 	return render(request, 'faults.html', context)
 
 def fire(request, team):
-	v = 0
-	v = 1 if (team == 2) else v = 2
+	v = 1
+	if (team == 1):
+		v = 2
 	coords1 = Coords.objects.filter(team = team).order_by('-id')[0] #order_by('-id')[:1]
 	coords2 = Coords.objects.filter(team = v).order_by('-id')[0] #order_by('-id')[:1]
 	angle = Angle.objects.filter(team = team).order_by('-id')[0] #order_by('-id')[:1]
