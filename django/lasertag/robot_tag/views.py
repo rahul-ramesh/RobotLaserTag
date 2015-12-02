@@ -45,9 +45,9 @@ def angles(request, team):
 
 def add_angles(request, team, angle):
 	try:
-		latest_angle = Angels.objects.filter(team=team)[0]
+		latest_angle = Angles.objects.filter(team=team)[0]
 		latest_angle.angle = angle%360
-	except:	
+	except IndexError:	
 		latest_angle = Angles(team = team, angle = angle%360)
 	latest_angle.save()
         return HttpResponseRedirect(reverse('index'))
@@ -61,7 +61,6 @@ def command(request, team):
 	return render(request, 'command.html', context)
 
 def add_command(request, team, command):
-	#c = (''.join(command.split("s")))
 	dist_step = 50
 	angle_step = 30
 	try:
@@ -94,7 +93,7 @@ def add_command(request, team, command):
 	coords.save()
         return HttpResponseRedirect(reverse('index'))
 
-def faults(request, team):i
+def faults(request, team):
 	try:
 		fault = Fault.objects.filter(attacker = team).order_by('-id')[0] #order_by('-id')[:1]
 	except:
