@@ -155,6 +155,8 @@ def main():
 	last_time = nanotime.now()
 	angle = 0
 	loc = [0,0]
+	sendCommand(connection, '142 20')
+	ang_change = get16Signed(connection)
 	#TODO: How many cm's to a map unit
 	scale = .7
 
