@@ -46,10 +46,10 @@ def sendCommand(connection, command):
 
     	else:
     		connection.write(chr(143))
-    		docked = False
-    		while(not docked):
-    			connection.write(chr(142) + chr(21))
-    			docked = get8Unsigned(connection) > 0
+    		#docked = False
+    		#while(not docked):
+    		#	connection.write(chr(142) + chr(21))
+    		#	docked = get8Unsigned(connection) > 0
        		return
 
 	connection.write(cmd)
@@ -182,7 +182,7 @@ def main():
 		#get fault from server
 		resp, contents = h.request(fault_ip);
 		faults = contents.split()
-		if(faults[3] > served_fault):
+		if(len(faults) > 2 and faults[3] > served_fault):
 			served_fault = faults[3]
 			fault = [faults[1], int(faults[2])]
 
