@@ -9,7 +9,7 @@ import serial
 def sendCommand(connection, command):
 	global h, fault
 
-	ip_addr = "http://http://54.218.43.192/robot_tag/"
+	ip_addr = "http://54.218.43.192/robot_tag/"
 	team = "1"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
@@ -128,7 +128,7 @@ def main():
 	#setup server connection
 	h = httplib2.Http(".cache")
 	
-	ip_addr = "http://http://54.218.43.192/robot_tag/"
+	ip_addr = "http://54.218.43.192/robot_tag/"
 	team = "1"
 
 	loc_ip = ip_addr + team +"/coords/"
