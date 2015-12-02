@@ -35,9 +35,10 @@ class Command(models.Model):
 		return str(self.team) + ': ' + str(self.command) + ' ' + str(self.id) + ' '
 	
 class Fault(models.Model):
-	fault_type = models.IntegerField(default = 1)
+	power = models.IntegerField(default = 1)
+	wheel = models.IntegerField(default = 1)
 	attacker = models.IntegerField(default=1)
 
 	def __str__(self):
-		return str(self.attacker) + ': ' + str(self.fault_type) + ' ' + str(self.id) + ' '
+		return str(self.attacker) + ': ' + str(self.wheel) + ' ' + str(self.power)+ ' ' + str(self.id) + ' '
 	
