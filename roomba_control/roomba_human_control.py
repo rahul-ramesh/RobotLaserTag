@@ -9,7 +9,7 @@ import serial
 def sendCommand(connection, command):
 	global h, fault
 
-	ip_addr = "http://192.168.43.55:8000/robot_tag/"
+	ip_addr = "http://http://54.218.43.192/robot_tag/"
 	team = "1"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
@@ -45,6 +45,10 @@ def sendCommand(connection, command):
 
     	else:
     		connection.write(chr(143))
+    		docked = False
+    		while(not docked):
+    			connection.write(chr(142) + chr(21))
+    			docked = get8Unsigned(connection) > 0
        		return
 
 	connection.write(cmd)
@@ -124,7 +128,7 @@ def main():
 	#setup server connection
 	h = httplib2.Http(".cache")
 	
-	ip_addr = "http://192.168.43.55:8000/robot_tag/"
+	ip_addr = "http://http://54.218.43.192/robot_tag/"
 	team = "1"
 
 	loc_ip = ip_addr + team +"/coords/"
@@ -182,6 +186,8 @@ def main():
 
 		#get commands from server
 		resp, content = h.request(cmd_ip)
+		if(contents == "No commands present!"):
+			continue
 		cmds = content.split()
 		if(cmds[2] > served_cmd):
 			last_time = nanotime.now()
@@ -211,10 +217,8 @@ def main():
 		#update angle
 		sendCommand(connection, '142 20')
 		ang_change = get16Signed(connection)
-		#TODO: can this be negative? Does that matter?
 		angle = (angle + ang_change) % 360
-		#TODO: make sure angle is formated as 3 digit number
-		h.request(ang_ip + str(angle) + '/')
+		h.request(ang_ip + "{0:0=3d}".format(angle) + '/')
 
         
         	#check for timeout
