@@ -28,8 +28,8 @@ class Angle(models.Model):
 		return str(self.team) + ': ' + str(self.angle) + ' '
 
 class Command(models.Model):
-	team = models.CharField(max_length = 20, default = 1)
-	command = models.IntegerField(default = 0)
+	command = models.CharField(max_length = 20, default = "fire")
+	team = models.IntegerField(default = 1)
 
 	def __str__(self):
 		return str(self.team) + ': ' + str(self.command) + ' ' + str(self.id) + ' '
