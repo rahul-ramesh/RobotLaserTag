@@ -4,6 +4,7 @@ import time
 import numpy as np 
 import nanotime
 import serial
+import struct
 #import RPi.GPIO as GPIO    
 
 def sendCommand(connection, command):
