@@ -25,12 +25,12 @@ def sendCommand(connection, command):
     			if(fault[0] == 'left'):
     				cmd += chr(int(cmds[1]))
     				cmd += chr(int(cmds[2]))
-    				vel = int(int(cmds[3]) << 8 + int(cmds[4]) * fault[1])
+    				vel = int(((int(cmds[3]) << 8) + int(cmds[4])) * fault[1])
     				cmd += chr(vel >> 8)
     				cmd += chr(vel % 256)
 
     			else:
-    				vel = int(int(cmds[1]) << 8 + int(cmds[2]) * fault[1])
+    				vel = int(((int(cmds[1]) << 8) + int(cmds[2])) * fault[1])
     				cmd += chr(vel >> 8)
     				cmd += chr(vel % 256)
     				cmd += chr(int(cmds[3]))
@@ -156,7 +156,7 @@ def main():
 	last_time = nanotime.now()
 	angle = 0
 	loc = [0,0]
-	sendCommand(connection, '142 20')
+	sendCommand(connection, '142s20')
 	ang_change = get16Signed(connection)
 	#TODO: How many cm's to a map unit
 	scale = .7
@@ -176,7 +176,7 @@ def main():
 			print expected_loc 
 			print "But got: "
 			print loc
-			sendCommand(connection, '141 1')
+			sendCommand(connection, '141s1')
 			bad_wheel, percent_lost = findFault(loc, expected_loc, prev_loc, last_command)			
 
 		#get fault from server
@@ -196,7 +196,7 @@ def main():
 			last_time = nanotime.now()
 			served_cmd = cmds[2]
 			sendCommand(connection, '128s131')
-			sendCommand(connection, adjustCommand(cmds[1], broken_wheel, percent_lost))
+			sendCommand(connection, adjustCommand(cmds[1], bad_wheel, percent_lost))
 			last_command = cmds[1]
 
 			#calculate expected position
@@ -207,7 +207,7 @@ def main():
 			right_vel = int(cmd[1]) << 8 + int(cmd[2])  
 			left_vel  = int(cmd[3]) << 8 + int(cmd[4]) 
 			if(right_vel == left_vel):
-				forward = 1 if(reight_vel == 500) else -1
+				forward = 1 if(right_vel == 500) else -1
 				expected_loc[0] = int(round(loc[0] + forward * math.cos(math.radians(angle)) * 5 * scale))
 				expected_loc[1] = int(round(loc[1] + forward * math.sin(math.radians(angle)) * 5 * scale))
 			else:
@@ -218,7 +218,7 @@ def main():
 			sendCommand(connection, '145s0s0s0s0')
 
 		#update angle
-		sendCommand(connection, '142 20')
+		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
 		angle = (angle + ang_change) % 360
 		h.request(ang_ip + "{0:0=3d}".format(angle) + '/')
