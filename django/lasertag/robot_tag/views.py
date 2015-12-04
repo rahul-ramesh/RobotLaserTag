@@ -38,18 +38,19 @@ def angles(request, team):
 	try:
 		angle = Angle.objects.filter(team=team).order_by('-id')[0]
 	except:	
-		angle = Angles(team = team, angle = 0)
+		angle = Angle(team = team, angle = 0)
 		angle.save()
 	context = {'angle' : str(angle)}
 	return render(request, 'angles.html', context)
 
 def add_angles(request, team, angle):
 	try:
-		latest_angle = Angles.objects.filter(team=team)[0]
-		latest_angle.angle = angle%360
-	except IndexError:	
-		latest_angle = Angles(team = team, angle = angle%360)
-	latest_angle.save()
+		latest_angle = Angle.objects.filter(team=team)[0]
+		latest_angle.angle = angle
+		latest_angle.save()
+	except:	
+		latest_angle = Angle.objects.create(team = team, angle = angle)
+		#latest_angle.save()
         return HttpResponseRedirect(reverse('index'))
 
 def command(request, team):
@@ -64,9 +65,9 @@ def add_command(request, team, command):
 	dist_step = 50
 	angle_step = 30
 	try:
-		angle = Angle.objects.filter(team=team)[0]
+		angleObj = Angle.objects.filter(team=team)[0]
 	except:
-		angle = Angle(team = team, angle = 0)
+		angleObj = Angle(team = team, angle = 0)
 
 	try:
 		coords = Coords.objects.filter(team = team)[0]
@@ -74,31 +75,33 @@ def add_command(request, team, command):
 		coords = Coords(team = team, x = 0, y = 0)
         
 	if command == "145s1s244s254s12":		#left
-		angle = (angle + angle_step)%360
-		angle.save()		
+		angleObj.angle = (angleObj.angle + angle_step)%360
+		angleObj.save()		
+
 	if command == "145s254s12s1s244": 		#right
-		angle = (angle - angle_step)%360
+		angleObj.angle = (angleObj.angle - angle_step)%360
 		angle.save()
+
 	if command == "145s1s244s1s244":			#front
-		coords.x = coords.x + dist_step*math.sin(angle)
-		coords.y = coords.y + dist_step*math.cos(angle)
+		coords.x = coords.x + dist_step*math.sin(angleObj.angle*1.0)
+		coords.y = coords.y + dist_step*math.cos(angleObj.angle*1.0)
 
 	if command == "145s254s12s254s12":		#back
-		coords.x = coords.x - dist_step*math.sin(angle)
-		coords.y = coords.y - dist_step*math.cos(angle)
+		coords.x = coords.x - dist_step*math.sin(angleObj.angle*1.0)
+		coords.y = coords.y - dist_step*math.cos(angleObj.angle*1.0)
 
 	latest_command = Command(team=team, command=command)
         latest_command.save()
-	angle.save()
+	angleObj.save()
 	coords.save()
         return HttpResponseRedirect(reverse('index'))
 
 def faults(request, team):
 	try:
-		fault = Fault.objects.filter(attacker = team).order_by('-id')[0] #order_by('-id')[:1]
+		faults = Fault.objects.filter(attacker = team).order_by('-id')
 	except:
-		fault = "No faults present!"
-	context = {'faults' : str(fault)}
+		faults = "No faults present!"
+	context = {'faults' : faults}
 	return render(request, 'faults.html', context)
 
 def fire(request, team):
