@@ -36,7 +36,6 @@ def main(cmds):
 
 
 	#calculate expected position
-	#begin with calculating time
 	cmd = cmds.split('s')
 	right_vel = (int(cmd[1]) << 8) + int(cmd[2]) 
 	left_vel  = (int(cmd[3]) << 8) + int(cmd[4]) 
