@@ -176,6 +176,7 @@ def isolateFault(cmds, fault):
 	right = get16Signed(connection)
 	sendCommand(connection, '142s42')
 	left = get16Signed(connection)
+	print right, left
 	cmd = cmds.split('s')
 	right_cmd = (int(cmd[1]) << 8) + int(cmd[2])
 	left_cmd  = (int(cmd[3]) << 8) + int(cmd[4]) 
