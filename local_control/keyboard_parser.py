@@ -41,11 +41,11 @@ def main():
 			
 		#if left
 		elif(charIn == 'a'):
-			cmd = '145s1s244s254s12'
+			cmd = '145s0s100s255s156'
 			
 		#if right
 		elif(charIn == 'd'):
-			cmd = '145s254s12s1s244'
+			cmd = '145s255s156s0s100'
 			
 		#if fire
 		elif(charIn == 'l'):

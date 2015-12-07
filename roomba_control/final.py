@@ -176,17 +176,14 @@ def isolateFault(cmds, fault):
 	right = get16Signed(connection)
 	sendCommand(connection, '142s42')
 	left = get16Signed(connection)
-	print right, left
 	cmd = cmds.split('s')
 	right_cmd = (int(cmd[1]) << 8) + int(cmd[2])
 	left_cmd  = (int(cmd[3]) << 8) + int(cmd[4]) 
 	if(left != left_cmd):
 		power_lost = 100 - int((left * 1.0)/left_cmd * 100)
-		print "Found fault: Left, " + str(power_lost)
 		return 'left', power_lost
 	elif(right != right_cmd):
 		power_lost = 100 - int((right * 1.0)/right_cmd * 100)
-		print "Found fault: Right, " + str(power_lost)
 		return 'right', power_lost
 	else:
 		return None
@@ -269,7 +266,9 @@ def main():
 		#update angle
 		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
-		angle = (ang + ang_change) % 360
+		ang = (ang + ang_change) % 360
+		resp, content = h.request(ang_ip + ang + '/')
+		print resp
 
 		#check for timeout
         if((nanotime.now() - last_time).minutes() > 5):
