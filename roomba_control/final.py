@@ -252,7 +252,7 @@ def main():
 			sendCommand(connection, cmd)
 
 			#calculate expected location
-			expected_loc = calculateExpectedLoc(ang, loc, cmd)
+			#expected_loc = calculateExpectedLoc(ang, loc, cmd)
 
 		#if no command then stop
 		else:
