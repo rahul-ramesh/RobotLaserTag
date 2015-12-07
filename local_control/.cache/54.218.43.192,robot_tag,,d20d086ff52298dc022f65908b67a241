@@ -1,21 +1,21 @@
 status: 200
-content-length: 64
+content-length: 68
 content-location: http://54.218.43.192/robot_tag/
 vary: Accept-Encoding
 server: Apache/2.4.7 (Ubuntu)
 -content-encoding: gzip
-date: Wed, 02 Dec 2015 20:22:15 GMT
+date: Mon, 07 Dec 2015 16:23:34 GMT
 x-frame-options: SAMEORIGIN
 content-type: text/html; charset=utf-8
 -varied-accept-encoding: gzip, deflate
 
 Coords History:
 
-	1: 0 0 <br>
+	1: 207 -59 <br>
 
 
 
 Angles History:
 
-	1: 120 <br>
+	1: 342 <br>
 
