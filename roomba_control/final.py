@@ -177,6 +177,8 @@ def isolateFault(cmds, fault):
 	sendCommand(connection, '142s42')
 	left = get16Signed(connection)
 	cmd = cmds.split('s')
+	if(len(cmd) < 5):
+		return fault
 	right_cmd = (int(cmd[1]) << 8) + int(cmd[2])
 	left_cmd  = (int(cmd[3]) << 8) + int(cmd[4]) 
 	if(left != left_cmd):
@@ -194,7 +196,7 @@ def main():
 	h = httplib2.Http(".cache")
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 
 	loc_ip = ip_addr + team +"/coords/"
 	add_coords_ip = ip_addr + team + "/add_coords/"
