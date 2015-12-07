@@ -260,7 +260,7 @@ def main():
 			sendCommand(connection, '145s0s0s0s0')
 
 		#check for fault
-		detected_fault = isolateFault(cmd)
+		detected_fault = isolateFault(cmd, detected_fault)
 
 		#update angle
 		sendCommand(connection, '142s20')
