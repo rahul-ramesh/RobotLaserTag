@@ -168,6 +168,7 @@ def findFault(loc, expected_loc, prev_loc, command):
 	return broken_wheel, percent_lost
 
 def isolateFault(cmds, fault):
+	global connection
 	if(cmds == '145s0s0s0s0'):
 		return fault
 
@@ -188,7 +189,7 @@ def isolateFault(cmds, fault):
 		return None
 
 def main():
-	global h, fault
+	global connection, h, fault
 	#init server connection
 	h = httplib2.Http(".cache")
 
