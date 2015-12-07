@@ -181,9 +181,11 @@ def isolateFault(cmds, fault):
 	left_cmd  = (int(cmd[3]) << 8) + int(cmd[4]) 
 	if(left != left_cmd):
 		power_lost = 100 - int((left * 1.0)/left_cmd * 100)
+		print "Found fault: Left, " + str(power_lost)
 		return 'left', power_lost
 	elif(right != right_cmd):
 		power_lost = 100 - int((right * 1.0)/right_cmd * 100)
+		print "Found fault: Right, " + str(power_lost)
 		return 'right', power_lost
 	else:
 		return None
