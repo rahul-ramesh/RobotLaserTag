@@ -118,9 +118,15 @@ def calculateExpectedLoc(angle, loc, cmds):
 	return expected_loc
 
 def adjustCommand(command, fault):
-	broken_wheel = fault[0]
-	percent_lost = fault[1]
+	if(fault != None):
+		broken_wheel = fault[0]
+		percent_lost = fault[1]
+	else:
+		broken_wheel = 'none'
+		percent_lost = 0
 	faulty_cmd = command.split('s')
+	if(len(faulty_cmd) < 5):
+		return command
 	right_vel = (int(faulty_cmd[1]) << 8) + int(faulty_cmd[2])  
 	left_vel  = (int(faulty_cmd[3]) << 8) + int(faulty_cmd[4]) 
 	right_hi = faulty_cmd[1]
