@@ -267,7 +267,7 @@ def main():
 		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
 		ang = (ang + ang_change) % 360
-		resp, content = h.request(ang_ip + ang + '/')
+		resp, content = h.request(ang_ip + ang.zfill(3) + '/')
 		print resp
 
 		#check for timeout
