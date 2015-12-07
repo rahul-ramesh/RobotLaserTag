@@ -188,7 +188,7 @@ def isolateFault(cmds, fault):
 		return None
 
 def main():
-
+	global h, fault
 	#init server connection
 	h = httplib2.Http(".cache")
 
@@ -220,6 +220,7 @@ def main():
 	cmd_served = 0
 	fault_served = 0
 	fault = None
+	detected_fault = None
 	ang = 0
 	last_time = nanotime.now()
 	expected_loc = loc
@@ -246,7 +247,7 @@ def main():
 			last_time = nanotime.now()
 
 			#adjust command for fault
-			cmd = adjustCommand(cmds[1], fault)
+			cmd = adjustCommand(cmds[1], detected_fault)
 
 			#send command to robot
 			sendCommand(connection, cmd)
@@ -259,7 +260,7 @@ def main():
 			sendCommand(connection, '145s0s0s0s0')
 
 		#check for fault
-		fault = isolateFault(cmd)
+		detected_fault = isolateFault(cmd)
 
 		#update angle
 		sendCommand(connection, '142s20')
