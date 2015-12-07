@@ -251,7 +251,7 @@ def main():
 			last_time = nanotime.now()
 
 			#adjust command for fault
-			cmd = adjustCommand(cmds[1], detected_fault)
+			cmd = adjustCommand(cmds[1], fault)
 
 			#send command to robot
 			sendCommand(connection, cmd)
