@@ -72,18 +72,21 @@ def main():
 	ang_ip = ip_addr + team + "/add_angles/"
 
 	#connet to roomba
-	port = "/dev/tty.usbserial-DA01NZOS"
+	port = "/dev/tty.usbserial-DA01NZS8"
 	connection = serial.Serial(port, baudrate=115200, timeout = 1)
-	sendCommand(connection, '128 131')
+	sendCommand(connection, '135')
 
 
 	#Decided how to move the robot
 	while True:
-		
-		sendCommand(connection, '142 20')
-		left = get16Signed(connection)
-		print "Read: " + str(left)
-		time.sleep(1)
+            sendCommand(connection, '149 2 43 44')
+            right = get16Unsigned(connection)
+            left = get16Signed(connection)
+            if(left != None and right != None):
+                right_vel = int((right * 7.2 * 3.14) / (508.8)) 
+                left_vel = int((left * 7.2 * 3.14) / (508.8)) 
+                print "Read: " + str(left_vel) + ' ' + str(right_vel)
+            time.sleep(1)
 
 
 main()
