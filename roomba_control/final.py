@@ -44,25 +44,30 @@ def sendCommand(connection, command):
 	cmds = command.split('s')
 	if(cmds[0] == '145'):
 		if(fault == None):
+			print "Sending: " + command + " Fault Free"
 			for v in cmds:
-                            cmd += chr(int(v))
+            	cmd += chr(int(v))
     		else:
+    			print "Sending: " + command + " With Fault: " + str(fault)
     			cmd = injectFault(cmds, fault)
 
     	elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
+        	print "Sending: " + command
         	for v in cmds:
         		cmd += chr(int(v))
 
     	elif(cmds[0] == 'fire'):
+    		print "Fire!"
         	h.request(fire_ip)
         	return 
 
     	else:
     		connection.write(chr(143))
-    		docked = False
-    		while(not docked):
-    			connection.write(chr(142) + chr(21))
-    			docked = (get8Unsigned(connection) != 0)
+    		print 'Docking'
+    		#docked = False
+    		#while(not docked):
+    		#	connection.write(chr(142) + chr(21))
+    		#	docked = (get8Unsigned(connection) != 0)
        		return
 
 	connection.write(cmd)
@@ -233,24 +238,38 @@ def main():
 		#grab location from server
 		resp, content = h.request(loc_ip)
 		coords = content.split()
-		loc = [int(coords[1]), int(coords[2])]
+		if(len(coords) > 2):
+			loc = [int(coords[1]), int(coords[2])]
+			print "Received loc: " + str(loc)
 
 		#get fault from server
 		resp, content = h.request(fault_ip)
 		faults = content.split()
-		if(len(faults) > 2 and int(faults[3]) > fault_served):
+		if(len(faults) > 3 and int(faults[3]) > fault_served):
 			fault_served = int(faults[3])
-			fault = [faults[1], int(faults[2])]
+			if(faults[1] == '1'):
+				wheel = 'left'
+			elif(faults[1] == '2'):
+				wheel = 'right'
+			else:
+				wheel = 'none' 
+			print "Received Fault: " + wheel + ' ' + faults[2]
+			fault = [wheel, int(faults[2])]
 
 		#grab command from server
 		resp, content = h.request(cmd_ip)
 		cmds = content.split()
 		if(int(cmds[2]) > cmd_served):
+			print "Received cmd: " + cmds[1]
 			cmd_served = int(cmds[2])
 			last_time = nanotime.now()
 
 			#adjust command for fault
 			cmd = adjustCommand(cmds[1], fault)
+			if(fault != None):
+				print "Adjusted command to: " + cmd
+			else:
+				print "No fault, command: " + cmd
 
 			#send command to robot
 			sendCommand(connection, cmd)
@@ -263,14 +282,14 @@ def main():
 			sendCommand(connection, '145s0s0s0s0')
 
 		#check for fault
-		detected_fault = isolateFault(cmd, detected_fault)
-
+		#detected_fault = isolateFault(cmd, detected_fault)
+		
 		#update angle
 		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
 		ang = (ang + ang_change) % 360
+		print "Updating angle to: " + str(ang)
 		resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
-		print resp
 
 		#check for timeout
         if((nanotime.now() - last_time).minutes() > 5):
