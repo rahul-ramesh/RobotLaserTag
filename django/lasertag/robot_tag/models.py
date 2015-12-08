@@ -38,7 +38,7 @@ class Fault(models.Model):
 	power = models.IntegerField(default = 1)
 	wheel = models.IntegerField(default = 1)
 	attacker = models.IntegerField(default=1)
-
+	
 	def __str__(self):
 		return str(self.attacker) + ': ' + str(self.wheel) + ' ' + str(self.power)+ ' ' + str(self.id) + ' '
 	
