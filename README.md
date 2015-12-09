@@ -6,5 +6,6 @@ This project demonstrates some of the strategies used to add fault tolerence to 
 We tried to include the aspect of faults into the very fabric of the game, so that the system would inherently be designed to forecast, prevent, and recover from faults.
 
 List of faults we tolerate:
-
-Rules of the game:
+Server Faults
+Hardware Faults
+Communication Faults

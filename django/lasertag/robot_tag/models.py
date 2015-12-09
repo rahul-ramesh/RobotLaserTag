@@ -1,5 +1,4 @@
 from django.db import models
-
 # Create your models here.
 
 class Map(models.Model):
@@ -38,8 +37,8 @@ class Fault(models.Model):
 	power = models.IntegerField(default = 1)
 	wheel = models.IntegerField(default = 1)
 	victim = models.IntegerField(default=1)
-	when = models.DateTimeField(auto_now = True)
-	
+	#when = models.DateTimeField(auto_now = True)
+	when = models.IntegerField(default = 1)
 	def __str__(self):
 		return str(self.victim) + ': ' + str(self.wheel) + ' ' + str(self.power)+ ' ' + str(self.id) + ' '
 	

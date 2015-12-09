@@ -6,6 +6,9 @@ import numpy as np
 import math
 import random
 # Create your views here.
+import os
+
+import nanotime
 
 
 def map(request):
@@ -94,10 +97,7 @@ def add_command(request, team, command):
 		#fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), attacker = team)
 		#fault = Fault(power = 50, wheel = 1, attacker = team)
 		#fault.save()
-		v = 1
-		if team == 1:
-			v = 2
-		fire(v)
+		fire(int(team))
 	latest_command = Command(team=team, command=command)
         latest_command.save()
         
@@ -113,52 +113,56 @@ def add_command(request, team, command):
         return HttpResponseRedirect(reverse('index'))
 
 def faults(request, team):
-	timeout = 5
+	timeout = 10
 	try:
-		faults = Fault.objects.filter(victim = team, when__gte=datetime.now()-timedelta(seconds=timeout)).order_by('-id')[0]
+		#faults = Fault.objects.filter(victim = team, when__gte=datetime.now()-timedelta(seconds=timeout)).order_by('-id')[0]
+		fault = Fault.objects.filter(victim = team).order_by('-id')[0]
+		#if (fault.when - nanotime.now().seconds()) > timeout:
+		if (fault.when) < nanotime.now().seconds() - timeout:
+			fault = "1: 3 0 0"
 	except:
-		faults = ""
-	context = {'faults' : faults}
+		fault = "" #Fault(victim = team, )
+	context = {'faults' : fault}
 	return render(request, 'faults.html', context)
 
-def fire(victim):
-	attacker = 1
-	if victim == 1:
-		attacker = 2
-	epsilon = 3.14/8
+def fire(attacker):
+	victim = 1
+	if attacker == 1:
+		victim = 2
+	epsilon = 45
 	hit = 0
 	coords1 = Coords.objects.filter(team = attacker).order_by('-id')[0]
 	coords2 = Coords.objects.filter(team = victim).order_by('-id')[0]
 	angle1 = Angle.objects.filter(team = attacker).order_by('-id')[0]
  	denominator = (coords1.x*1.0 - coords2.x*1.0)
-	
+	#os.system("echo " + str(coords1) + str(coords2) + str(angle) + " >> log.txt")
 	#robots are along y axis, and attacker is pointing up
 	if ((abs(denominator) < 10.0)):
-		if ((math.radians(abs(angle1.angle-180)) < epsilon) and (coords2.y > coords1.y)):
+		if ((abs(angle1.angle-180) < epsilon) and (coords2.y > coords1.y)):
 			hit = 1
-		if ((math.radians(abs(angle1.angle)) < epsilon) and (coords2.y < coords1.y)):
+		if ((abs(angle1.angle) < epsilon) and (coords2.y < coords1.y)):
 			hit = 1
 	#attacker is facing along line connecting robots
 
-	if (angle1.angle <90):
+	elif (angle1.angle <90):
 		if (coords2.x > coords1.x and coords2.y < coords1.y):
-			if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < epsilon):
-				hit = 1
+			#if(abs(angle1.angle - math.degrees(math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator))) < epsilon):
+			hit = 1
 		else:
 			hit = 0
 
 	elif (angle1.angle <180):
 		if (coords2.x > coords1.x and coords2.y > coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3.14/2) + epsilon)):
-                                hit = 1
+                        #if(abs(angle1.angle - math.degrees(math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) - 90) < epsilon):
+                        hit = 1
 
 		else:
 			hit = 0
 
 	elif (angle1.angle <270):
                 if (coords2.x < coords1.x and coords2.y > coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < (3.14 + epsilon)):
-                                hit = 1
+                        #if(abs(angle1.angle - math.degrees(math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) - 180) < epsilon):
+                        hit = 1
 
                 else:
                         hit = 0
@@ -166,23 +170,23 @@ def fire(victim):
 
 	else:
                 if (coords2.x < coords1.x and coords2.y < coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3*3.14/2) + epsilon)):
-                                hit = 1
+                        #if(abs(angle1.angle - math.degrees(math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) - 270) < epsilon):
+                        hit = 1
 
                 else:
                         hit = 0
 
 	if (hit == 1):
 		hit = 0
-		try:
-                        fault = Fault.objects.filter(victim = victim).order_by('-id')[0]
-			fault.power = random.randrange(50,90)
-			fault.wheel = random.randrange(1,3)
-			fault.victim = victim
-			fault.save()
-                except:
-                        fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), victim = victim)
-                        fault.save()
+		#try:
+                #        fault = Fault.objects.filter(victim = victim).order_by('-id')[0]
+		#	fault.power = random.randrange(50,90)
+		#	fault.wheel = random.randrange(1,3)
+		#	fault.victim = victim
+		#	fault.save()
+                #except:
+                fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), victim = victim, when = int(nanotime.now().seconds()))
+                fault.save()
 	return
 
 def index(request):
