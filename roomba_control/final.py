@@ -6,31 +6,48 @@ import numpy as np
 import math
 import struct
 
+
+def update_angle(right, left):
+	global ang, time_spent, h, ang_ip
+	radius = 235
+	left_dist = left * 1.0 * .1
+	right_dist = right * 1.0 * .1
+	ang = (ang + int(degrees((left_dist - right_dist)/ radius))) % 360
+	print "Updating angle to: " + str(ang)
+	resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
+
 def injectFault(cmds, fault):
-    cmd = chr(int(cmds[0]))
+	right_vel = (int(cmds[1]) << 8) + int(cmds[2])  
+	left_vel  = (int(cmds[3]) << 8) + int(cmds[4]) 
+
+    cmd = chr(145)
     if(fault[0] == 'left'):
-        cmd += chr(int(cmds[1]))
-        cmd += chr(int(cmds[2]))
         vel = (int(cmds[3]) << 8) + int(cmds[4])
         if(vel > (1 << 15)):
             negVel = vel - (1 << 16)
-            faultyVel = int(negVel  * (100 - int(fault[1]))/100.0) + (1 << 16)
+            left_vel = int(negVel  * (100 - int(fault[1]))/100.0) + (1 << 16)
         else:
-            faultyVel = int(vel  * (100 - int(fault[1]))/100.0)
-        cmd += chr(faultyVel >> 8)
-        cmd += chr(faultyVel % 256)
+            left_vel = int(vel  * (100 - int(fault[1]))/100.0)
 
     else:
         vel = (int(cmds[1]) << 8) + int(cmds[2])
         if(vel > (1 << 15)):
             negVel = vel - (1 << 16)
-            faultyVel = int(negVel  * (100 - int(fault[1]))/100.0) + (1 << 16)
+            right_vel = int(negVel  * (100 - int(fault[1]))/100.0) + (1 << 16)
         else:
-            faultyVel = int(vel  * (100 - int(fault[1]))/100.0)
-        cmd += chr(faultyVel >> 8)
-        cmd += chr(faultyVel % 256)
-        cmd += chr(int(cmds[3]))
-        cmd += chr(int(cmds[4]))
+            right_vel = int(vel  * (100 - int(fault[1]))/100.0)
+    
+    update_angle(right_vel, left_vel)
+
+    right_hi = right_vel >> 8
+	right_lo = right_vel % 256 
+	left_hi  = left_vel >> 8
+	left_lo  = left_vel & 256
+ 
+	cmd += chr(right_hi)
+	cmd += chr(right_lo)
+	cmd += chr(left_hi)
+	cmd += chr(left_lo)
     return cmd
 
 def sendCommand(connection, command):
@@ -205,7 +222,7 @@ def isolateFault(cmds, fault):
 		return None
 
 def main():
-	global connection, h, fault
+	global connection, h, fault, ang, time_spent, ang_ip
 	#init server connection
 	h = httplib2.Http(".cache")
 
@@ -220,8 +237,7 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	#port = "/dev/ttyUSB0"
-	port = "/dev/tty.usbserial-DA01NZOS"
+	port = "/dev/ttyUSB0"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
@@ -230,9 +246,6 @@ def main():
 	coords = content.split()
 	loc = [coords[1], coords[2]]
 
-	#init angle reading
-	sendCommand(connection, '142s20')
-	get16Signed(connection)
 
 	#init variables
 	cmd_served = 0
@@ -242,6 +255,7 @@ def main():
 	ang = 0
 	last_time = nanotime.now()
 	expected_loc = loc
+	time_spent = 0
 
 
 	while True:
@@ -295,15 +309,9 @@ def main():
 		#detected_fault = isolateFault(cmd, detected_fault)
 		detected_fault = fault
 		
-		#update angle
-		sendCommand(connection, '142s20')
-		ang_change = get16Signed(connection)
-		ang = (ang + ang_change) % 360
-		print "Updating angle to: " + str(ang)
-		resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
 		#check for timeout
-        	if((nanotime.now() - last_time).minutes() > 5):
+        	if((nanotime.now() - last_time).minutes() > 4):
         		last_time = nanotime.now()
 	        	sendCommand(connection, '143')
 
