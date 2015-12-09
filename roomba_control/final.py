@@ -251,8 +251,7 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	#port = "/dev/ttyUSB0"
-	port = "/dev/tty.usbserial-DA01NZS8"
+	port = "/dev/ttyUSB0"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
