@@ -37,8 +37,9 @@ class Command(models.Model):
 class Fault(models.Model):
 	power = models.IntegerField(default = 1)
 	wheel = models.IntegerField(default = 1)
-	attacker = models.IntegerField(default=1)
+	victim = models.IntegerField(default=1)
+	when = models.DateTimeField(auto_now = True)
 	
 	def __str__(self):
-		return str(self.attacker) + ': ' + str(self.wheel) + ' ' + str(self.power)+ ' ' + str(self.id) + ' '
+		return str(self.victim) + ': ' + str(self.wheel) + ' ' + str(self.power)+ ' ' + str(self.id) + ' '
 	

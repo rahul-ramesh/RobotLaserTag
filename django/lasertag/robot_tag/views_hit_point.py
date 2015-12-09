@@ -94,10 +94,7 @@ def add_command(request, team, command):
 		#fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), attacker = team)
 		#fault = Fault(power = 50, wheel = 1, attacker = team)
 		#fault.save()
-		v = 1
-		if team == 1:
-			v = 2
-		fire(v)
+		fire(team)
 	latest_command = Command(team=team, command=command)
         latest_command.save()
         
@@ -113,77 +110,61 @@ def add_command(request, team, command):
         return HttpResponseRedirect(reverse('index'))
 
 def faults(request, team):
-	timeout = 5
 	try:
-		faults = Fault.objects.filter(victim = team, when__gte=datetime.now()-timedelta(seconds=timeout)).order_by('-id')[0]
+		faults = Fault.objects.filter(attacker = team).order_by('-id')[0]
 	except:
-		faults = ""
+		faults = "No faults present!"
 	context = {'faults' : faults}
 	return render(request, 'faults.html', context)
 
-def fire(victim):
-	attacker = 1
-	if victim == 1:
-		attacker = 2
-	epsilon = 3.14/8
-	hit = 0
-	coords1 = Coords.objects.filter(team = attacker).order_by('-id')[0]
-	coords2 = Coords.objects.filter(team = victim).order_by('-id')[0]
-	angle1 = Angle.objects.filter(team = attacker).order_by('-id')[0]
- 	denominator = (coords1.x*1.0 - coords2.x*1.0)
+def fire(team):
+	v = 1
+	epsilon = 10.0
+	if (team == 1):
+		v = 2
 	
-	#robots are along y axis, and attacker is pointing up
-	if ((abs(denominator) < 10.0)):
-		if ((math.radians(abs(angle1.angle-180)) < epsilon) and (coords2.y > coords1.y)):
-			hit = 1
-		if ((math.radians(abs(angle1.angle)) < epsilon) and (coords2.y < coords1.y)):
-			hit = 1
-	#attacker is facing along line connecting robots
+	#try:
+	coords1 = Coords.objects.filter(team = team).order_by('-id')[0]
+	coords2 = Coords.objects.filter(team = v).order_by('-id')[0]
+	angle1 = Angle.objects.filter(team = team).order_by('-id')[0]
+	#except:
+	#	return HttpResponseRedirect(reverse('index'))
 
-	if (angle1.angle <90):
-		if (coords2.x > coords1.x and coords2.y < coords1.y):
-			if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < epsilon):
-				hit = 1
-		else:
-			hit = 0
+	#print "in fire"
+	if ((coords1.x - coords2.x) == 0):
+		#print "exception zero denom"
+		if ((angle1.angle - 90) < epsilon):
+			try:
+				fault = Fault.objects.filter(attacker = team).order_by('-id')[0]
+				fault.power = random.randrange(50,90)
+                        	fault.wheel = random.randrange(1,3)
+                        	fault.attacker = v
+                        	fault.save()
 
-	elif (angle1.angle <180):
-		if (coords2.x > coords1.x and coords2.y > coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3.14/2) + epsilon)):
-                                hit = 1
-
-		else:
-			hit = 0
-
-	elif (angle1.angle <270):
-                if (coords2.x < coords1.x and coords2.y > coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < (3.14 + epsilon)):
-                                hit = 1
-
-                else:
-                        hit = 0
-
-
-	else:
-                if (coords2.x < coords1.x and coords2.y < coords1.y):
-                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3*3.14/2) + epsilon)):
-                                hit = 1
-
-                else:
-                        hit = 0
-
-	if (hit == 1):
-		hit = 0
+			except:
+				fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), attacker = team)
+				fault.save()
+	elif (abs(math.tan(math.radians(angle1.angle)) - ((coords1.y*1.0 - coords2.y*1.0)/(coords1.x*1.0 - coords2.x*1.0))) < epsilon):
+		#print "in normal case:" + str([(math.tan(angle1.angle)), coords1.y, coords2.y, coords1.x, coords2.x])
 		try:
-                        fault = Fault.objects.filter(victim = victim).order_by('-id')[0]
+                        fault = Fault.objects.filter(attacker = team).order_by('-id')[0]
 			fault.power = random.randrange(50,90)
 			fault.wheel = random.randrange(1,3)
-			fault.victim = victim
+			fault.attacker = v
 			fault.save()
                 except:
-                        fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), victim = victim)
+                        fault = Fault(power = random.randrange(50,90), wheel = random.randrange(1,3), attacker = team)
                         fault.save()
 	return
+#	slope = 0
+#	if (coords2.x - coords1.x != 0):
+#		slope = (coords2.y - coords1.y)*1.0/(coords2.x - coords1.x)
+
+#	if (math.tan(angle.angle*1.0) == slope):
+		#target hit
+#		fault = Fault(fault_type=team, attacker=team)
+#		fault.save()
+#        return HttpResponseRedirect(reverse('index'))
 
 def index(request):
 	#if not(os.path.exists("db.sqlite3")):
@@ -192,6 +173,5 @@ def index(request):
 	#	os.system("sudo chmod 777 ~/class/RobotLaserTag/django/lasertag/db.sqlite3")
 	coords = Coords.objects.all().order_by('-id')
 	angles = Angle.objects.all().order_by('-id')
-	faults = Fault.objects.all().order_by('-id')
-	context = {'coords' : coords, 'angles' : angles, 'faults' : faults}
+	context = {'coords' : coords, 'angles' : angles}
 	return render(request, 'index.html', context)
