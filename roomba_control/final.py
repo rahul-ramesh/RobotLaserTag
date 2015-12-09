@@ -68,7 +68,7 @@ def sendCommand(connection, command):
 	global h, fault, last_command
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
 
@@ -240,7 +240,7 @@ def main():
 	h = httplib2.Http(".cache")
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 
 	loc_ip = ip_addr + team +"/coords/"
 	add_coords_ip = ip_addr + team + "/add_coords/"
@@ -297,7 +297,6 @@ def main():
 			print "Received Fault: " + wheel + ' ' + faults[2]
 			if(fault == None or (wheel != fault[0] or int(faults[2]) != fault[1])):
 				countdown = 3
-				sendCommand(connection, '135s1')
 			fault = [wheel, int(faults[2])]
 
 		#grab command from server
