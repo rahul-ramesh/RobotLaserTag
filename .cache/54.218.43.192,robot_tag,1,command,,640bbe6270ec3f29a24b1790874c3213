@@ -1,12 +1,12 @@
 status: 200
-content-length: 20
+content-length: 28
 content-location: http://54.218.43.192/robot_tag/1/command/
 vary: Accept-Encoding
 server: Apache/2.4.7 (Ubuntu)
 -content-encoding: gzip
-date: Wed, 09 Dec 2015 03:44:50 GMT
+date: Wed, 09 Dec 2015 17:14:58 GMT
 x-frame-options: SAMEORIGIN
 content-type: text/html; charset=utf-8
 -varied-accept-encoding: gzip, deflate
 
-1: 128s131 1980 <p>
+1: 145s255s6s255s6 5678 <p>

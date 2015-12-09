@@ -24,7 +24,6 @@ def update_angle():
 	left_dist = left * (time_spent.seconds() - buff)
 	right_dist = right * (time_spent.seconds() - buff)
 	ang = (ang + 2 * int(math.degrees((left_dist - right_dist)/ radius))) % 360
-	print left, right, time_spent.seconds(), math.degrees((left_dist - right_dist)/ radius)
 	print "Updating angle to: " + str(ang)
 	resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
@@ -69,7 +68,7 @@ def sendCommand(connection, command):
 	global h, fault, last_command
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "2"
+	team = "1"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
 
@@ -87,7 +86,7 @@ def sendCommand(connection, command):
     				print "Sending: " + command + " With Fault: " + str(fault)
     			cmd = injectFault(cmds, fault)
 
-    	elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
+    	elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141' or cmds[0] == '135'):
         	for v in cmds:
         		cmd += chr(int(v))
 
@@ -241,7 +240,7 @@ def main():
 	h = httplib2.Http(".cache")
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "2"
+	team = "1"
 
 	loc_ip = ip_addr + team +"/coords/"
 	add_coords_ip = ip_addr + team + "/add_coords/"
@@ -251,8 +250,8 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	#port = "/dev/ttyUSB0"
-	port = "/dev/tty.usbserial-DA01NZOS"
+	port = "/dev/ttyUSB0"
+	#port = "/dev/tty.usbserial-DA01NZS8"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
@@ -273,7 +272,7 @@ def main():
 	time_spent = 0
 	start = 0
 	last_command = None
-	countdown = 5
+	countdown = 3
 
 
 	while True:
@@ -287,7 +286,7 @@ def main():
 		#get fault from server
 		resp, content = h.request(fault_ip)
 		faults = content.split()
-		if(len(faults) > 3 and int(faults[3]) > fault_served):
+		if(len(faults) > 3):
 			fault_served = int(faults[3])
 			if(faults[1] == '1'):
 				wheel = 'left'
@@ -296,8 +295,9 @@ def main():
 			else:
 				wheel = 'none' 
 			print "Received Fault: " + wheel + ' ' + faults[2]
-			if(fault == None or (wheel != fault[0] or int(faults[2]) != fault[2])):
-				countdown = 5
+			if(fault == None or (wheel != fault[0] or int(faults[2]) != fault[1])):
+				countdown = 3
+				sendCommand(connection, '135s1')
 			fault = [wheel, int(faults[2])]
 
 		#grab command from server
