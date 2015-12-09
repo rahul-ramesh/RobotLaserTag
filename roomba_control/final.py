@@ -221,7 +221,7 @@ def main():
 
 	#init serial connection
 	#port = "/dev/ttyUSB0"
-	port = "/dev/tty.usbserial-DA01NZS8"
+	port = "/dev/tty.usbserial-DA01NZOS"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
@@ -275,7 +275,7 @@ def main():
 			last_time = nanotime.now()
 
 			#adjust command for fault
-			cmd = adjustCommand(cmds[1], fault)
+			cmd = adjustCommand(cmds[1], detected_fault)
 			if(fault != None):
 				print "Adjusted command to: " + cmd
 			else:
@@ -293,12 +293,13 @@ def main():
 
 		#check for fault
 		#detected_fault = isolateFault(cmd, detected_fault)
+		detected_fault = fault
 		
 		#update angle
 		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
 		ang = (ang + ang_change) % 360
-		#print "Updating angle to: " + str(ang)
+		print "Updating angle to: " + str(ang)
 		resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
 		#check for timeout

@@ -4,7 +4,7 @@ content-location: http://54.218.43.192/robot_tag/1/coords/
 vary: Accept-Encoding
 server: Apache/2.4.7 (Ubuntu)
 -content-encoding: gzip
-date: Wed, 09 Dec 2015 00:02:15 GMT
+date: Wed, 09 Dec 2015 03:44:50 GMT
 x-frame-options: SAMEORIGIN
 content-type: text/html; charset=utf-8
 -varied-accept-encoding: gzip, deflate
