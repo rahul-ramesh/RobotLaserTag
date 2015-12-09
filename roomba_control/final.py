@@ -7,18 +7,30 @@ import math
 import struct
 
 
-def update_angle(right, left):
-	global ang, time_spent, h, ang_ip
+def update_angle():
+	global ang, last_command, time_spent, h, ang_ip
+	if(time_spent == 0 or last_command == None or last_command == '145s0s0s0s0'):
+		return
 	radius = 235
-	left_dist = left * 1.0 * .1
-	right_dist = right * 1.0 * .1
-	ang = (ang + int(degrees((left_dist - right_dist)/ radius))) % 360
+	cmd = last_command.split('s')
+	right = (int(cmd[1]) << 8) + int(cmd[2])  
+	left  = (int(cmd[3]) << 8) + int(cmd[4])
+	if(left > (1 << 15)):
+		left = left - (1 << 16)
+
+	if(right > (1 << 15)):
+		right = right - (1 << 16) 
+	left_dist = left * time_spent.seconds()
+	right_dist = right * time_spent.seconds()
+	print left, right, time_spent.seconds()
+	ang = (ang + int(math.degrees((left_dist - right_dist)/ radius))) % 360
 	print "Updating angle to: " + str(ang)
 	resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
 def injectFault(cmds, fault):
-	right_vel = (int(cmds[1]) << 8) + int(cmds[2])  
-	left_vel  = (int(cmds[3]) << 8) + int(cmds[4]) 
+    global last_command
+    right_vel = (int(cmds[1]) << 8) + int(cmds[2])  
+    left_vel  = (int(cmds[3]) << 8) + int(cmds[4]) 
 
     cmd = chr(145)
     if(fault[0] == 'left'):
@@ -37,17 +49,19 @@ def injectFault(cmds, fault):
         else:
             right_vel = int(vel  * (100 - int(fault[1]))/100.0)
     
-    update_angle(right_vel, left_vel)
+    update_angle()
 
     right_hi = right_vel >> 8
-	right_lo = right_vel % 256 
-	left_hi  = left_vel >> 8
-	left_lo  = left_vel & 256
- 
-	cmd += chr(right_hi)
-	cmd += chr(right_lo)
-	cmd += chr(left_hi)
-	cmd += chr(left_lo)
+    right_lo = right_vel % 256 
+    left_hi  = left_vel >> 8
+    left_lo  = left_vel % 256
+    last_command = '145s' + str(right_hi) + 's' + str(right_lo) + 's' + str(left_hi) + 's' + str(left_lo)
+    
+
+    cmd += chr(right_hi)
+    cmd += chr(right_lo)
+    cmd += chr(left_hi)
+    cmd += chr(left_lo)
     return cmd
 
 def sendCommand(connection, command):
@@ -65,7 +79,7 @@ def sendCommand(connection, command):
 			for v in cmds:
 	            		cmd += chr(int(v))
     		else:
-    			if(cmds[2] != 0):
+    			if(command != '145s0s0s0s0'):
     				print "Sending: " + command + " With Fault: " + str(fault)
     			cmd = injectFault(cmds, fault)
 
@@ -222,7 +236,7 @@ def isolateFault(cmds, fault):
 		return None
 
 def main():
-	global connection, h, fault, ang, time_spent, ang_ip
+	global connection, h, fault, ang, time_spent, ang_ip, last_command
 	#init server connection
 	h = httplib2.Http(".cache")
 
@@ -237,7 +251,8 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	port = "/dev/ttyUSB0"
+	#port = "/dev/ttyUSB0"
+	port = "/dev/tty.usbserial-DA01NZS8"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
@@ -256,6 +271,8 @@ def main():
 	last_time = nanotime.now()
 	expected_loc = loc
 	time_spent = 0
+	start = 0
+	last_command = None
 
 
 	while True:
@@ -296,7 +313,14 @@ def main():
 				print "No fault, command: " + cmd
 
 			#send command to robot
+
+			end = nanotime.now()
 			sendCommand(connection, cmd)
+			if(start != 0):
+				time_spent = end - start
+			start = nanotime.now()
+
+
 
 			#calculate expected location
 			#expected_loc = calculateExpectedLoc(ang, loc, cmd)
