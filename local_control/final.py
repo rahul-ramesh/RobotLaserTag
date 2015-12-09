@@ -7,7 +7,7 @@ import math
 import struct
 
 def injectFault(cmds, fault):
-    cmd = chr(int(cmds[0]))
+    cmd = ""
     if(fault[0] == 'left'):
         cmd += chr(int(cmds[1]))
         cmd += chr(int(cmds[2]))
@@ -37,19 +37,16 @@ def sendCommand(connection, command):
 	global h, fault
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
 
 	cmds = command.split('s')
 	if(cmds[0] == '145'):
 		if(fault == None):
-			print "Sending: " + command + " Fault Free"
 			for v in cmds:
-	            		cmd += chr(int(v))
+                            cmd += chr(int(v))
     		else:
-    			if(cmds[2] != 0):
-    				print "Sending: " + command + " With Fault: " + str(fault)
     			cmd = injectFault(cmds, fault)
 
     	elif(cmds[0] == '128' or cmds[0] == '142' or cmds[0] == '141'):
@@ -57,29 +54,18 @@ def sendCommand(connection, command):
         		cmd += chr(int(v))
 
     	elif(cmds[0] == 'fire'):
-    		print "Fire!"
         	h.request(fire_ip)
         	return 
 
     	else:
-    		print 'Docking: ' + str(cmds)
     		connection.write(chr(143))
     		#docked = False
     		#while(not docked):
     		#	connection.write(chr(142) + chr(21))
     		#	docked = (get8Unsigned(connection) != 0)
        		return
-	
-	if(command != '145s0s0s0s0' and command != '142s20'):
-		print "Writing: " + str(cmd.split('\\'))
-	try:
-    		if connection is not None:
-        		connection.write(cmd)
-        	else:
-        		print "Not connected."
-        except serial.SerialException:
-        	print "Lost connection"
-        	connection = None
+
+	connection.write(cmd)
 
 
 
@@ -118,7 +104,7 @@ def distanceBetween(loc, expected_loc):
 
 
 def calculateExpectedLoc(angle, loc, cmds):
-	expected_loc = loc
+	expected_loc = [0,0]
 	cmd = cmds.split('s')
 	right_vel = (int(cmd[1]) << 8) + int(cmd[2]) 
 	left_vel  = (int(cmd[3]) << 8) + int(cmd[4]) 
@@ -210,7 +196,7 @@ def main():
 	h = httplib2.Http(".cache")
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 
 	loc_ip = ip_addr + team +"/coords/"
 	add_coords_ip = ip_addr + team + "/add_coords/"
@@ -220,15 +206,14 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	#port = "/dev/ttyUSB0"
-	port = "/dev/tty.usbserial-DA01NZS8"
-	connection = serial.Serial(port, baudrate=19200, timeout = 1)
+	port = "/dev/ttyUSB0"
+	connection = serial.Serial(port, baudrate=115200, timeout = 1)
 	sendCommand(connection, '128s131')
 
 	#grab inital loc from server
-	resp, content = h.request(loc_ip)
-	coords = content.split()
-	loc = [coords[1], coords[2]]
+	#resp, content = h.request(loc_ip)
+	#coords = content.split()
+	#loc = [coords[1], coords[2]]
 
 	#init angle reading
 	sendCommand(connection, '142s20')
@@ -241,45 +226,38 @@ def main():
 	detected_fault = None
 	ang = 0
 	last_time = nanotime.now()
-	expected_loc = loc
+	#expected_loc = loc
 
 
 	while True:
 		#grab location from server
-		resp, content = h.request(loc_ip)
-		coords = content.split()
-		if(len(coords) > 2):
-			loc = [int(coords[1]), int(coords[2])]
-			#print "Received loc: " + str(loc)
+		#resp, content = h.request(loc_ip)
+		#coords = content.split()
+		#loc = [int(coords[1]), int(coords[2])]
 
 		#get fault from server
 		resp, content = h.request(fault_ip)
 		faults = content.split()
-		if(len(faults) > 3 and int(faults[3]) > fault_served):
+		if(len(faults) > 2 and int(faults[3]) > fault_served):
 			fault_served = int(faults[3])
 			if(faults[1] == '1'):
 				wheel = 'left'
 			elif(faults[1] == '2'):
 				wheel = 'right'
 			else:
-				wheel = 'none' 
-			print "Received Fault: " + wheel + ' ' + faults[2]
+				wheel = 'none'
 			fault = [wheel, int(faults[2])]
-
+			sendCommand(connection, '141s1')
+		
 		#grab command from server
 		resp, content = h.request(cmd_ip)
 		cmds = content.split()
 		if(int(cmds[2]) > cmd_served):
-			print "Received cmd: " + cmds[1]
 			cmd_served = int(cmds[2])
 			last_time = nanotime.now()
 
 			#adjust command for fault
 			cmd = adjustCommand(cmds[1], fault)
-			if(fault != None):
-				print "Adjusted command to: " + cmd
-			else:
-				print "No fault, command: " + cmd
 
 			#send command to robot
 			sendCommand(connection, cmd)
@@ -293,12 +271,11 @@ def main():
 
 		#check for fault
 		#detected_fault = isolateFault(cmd, detected_fault)
-		
+
 		#update angle
 		sendCommand(connection, '142s20')
 		ang_change = get16Signed(connection)
 		ang = (ang + ang_change) % 360
-		#print "Updating angle to: " + str(ang)
 		resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
 		#check for timeout
