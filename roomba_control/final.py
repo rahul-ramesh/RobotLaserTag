@@ -273,6 +273,7 @@ def main():
 	time_spent = 0
 	start = 0
 	last_command = None
+	countdown = 5
 
 
 	while True:
@@ -295,6 +296,8 @@ def main():
 			else:
 				wheel = 'none' 
 			print "Received Fault: " + wheel + ' ' + faults[2]
+			if(fault == None or (wheel != fault[0] or int(faults[2]) != fault[2])):
+				countdown = 5
 			fault = [wheel, int(faults[2])]
 
 		#grab command from server
@@ -302,6 +305,7 @@ def main():
 		cmds = content.split()
 
 		if(int(cmds[2]) > cmd_served):
+			countdown = countdown - 1
 			print "Received cmd: " + cmds[1]
 			cmd_served = int(cmds[2])
 			last_time = nanotime.now()
@@ -338,7 +342,8 @@ def main():
 
 		#check for fault
 		#detected_fault = isolateFault(cmd, detected_fault)
-		detected_fault = fault
+		if(countdown < 0):
+			detected_fault = fault
 		
 
 		#check for timeout
