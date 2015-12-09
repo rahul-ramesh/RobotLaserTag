@@ -117,7 +117,7 @@ def faults(request, team):
 	try:
 		faults = Fault.objects.filter(victim = team, when__gte=datetime.now()-timedelta(seconds=timeout)).order_by('-id')[0]
 	except:
-		faults = "No faults present!"
+		faults = ""
 	context = {'faults' : faults}
 	return render(request, 'faults.html', context)
 
@@ -133,14 +133,45 @@ def fire(victim):
  	denominator = (coords1.x*1.0 - coords2.x*1.0)
 	
 	#robots are along y axis, and attacker is pointing up
-	if ((abs(denominator) < 1.0)):
-		if (math.radians(abs(angle1.angle%360-270)) < epsilon):
+	if ((abs(denominator) < 10.0)):
+		if ((math.radians(abs(angle1.angle-180)) < epsilon) and (coords2.y > coords1.y)):
 			hit = 1
-
+		if ((math.radians(abs(angle1.angle)) < epsilon) and (coords2.y < coords1.y)):
+			hit = 1
 	#attacker is facing along line connecting robots
-	elif (((math.radians(angle1.angle%360 - 180)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < epsilon):
-		hit = 1
-		
+
+	if (angle1.angle <90):
+		if (coords2.x > coords1.x and coords2.y < coords1.y):
+			if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < epsilon):
+				hit = 1
+		else:
+			hit = 0
+
+	elif (angle1.angle <180):
+		if (coords2.x > coords1.x and coords2.y > coords1.y):
+                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3.14/2) + epsilon)):
+                                hit = 1
+
+		else:
+			hit = 0
+
+	elif (angle1.angle <270):
+                if (coords2.x < coords1.x and coords2.y > coords1.y):
+                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < (3.14 + epsilon)):
+                                hit = 1
+
+                else:
+                        hit = 0
+
+
+	else:
+                if (coords2.x < coords1.x and coords2.y < coords1.y):
+                        if(((math.radians(angle1.angle)) - math.atan((coords1.y*1.0 - coords2.y*1.0)/denominator)) < ((3*3.14/2) + epsilon)):
+                                hit = 1
+
+                else:
+                        hit = 0
+
 	if (hit == 1):
 		hit = 0
 		try:
@@ -161,5 +192,6 @@ def index(request):
 	#	os.system("sudo chmod 777 ~/class/RobotLaserTag/django/lasertag/db.sqlite3")
 	coords = Coords.objects.all().order_by('-id')
 	angles = Angle.objects.all().order_by('-id')
-	context = {'coords' : coords, 'angles' : angles}
+	faults = Fault.objects.all().order_by('-id')
+	context = {'coords' : coords, 'angles' : angles, 'faults' : faults}
 	return render(request, 'index.html', context)
