@@ -11,7 +11,8 @@ def update_angle():
 	global ang, last_command, time_spent, h, ang_ip
 	if(time_spent == 0 or last_command == None or last_command == '145s0s0s0s0'):
 		return
-	radius = 235
+	radius = 235.0
+	buff = .05
 	cmd = last_command.split('s')
 	right = (int(cmd[1]) << 8) + int(cmd[2])  
 	left  = (int(cmd[3]) << 8) + int(cmd[4])
@@ -20,10 +21,10 @@ def update_angle():
 
 	if(right > (1 << 15)):
 		right = right - (1 << 16) 
-	left_dist = left * time_spent.seconds()
-	right_dist = right * time_spent.seconds()
-	print left, right, time_spent.seconds()
-	ang = (ang + int(math.degrees((left_dist - right_dist)/ radius))) % 360
+	left_dist = left * (time_spent.seconds() - buff)
+	right_dist = right * (time_spent.seconds() - buff)
+	ang = (ang + 2 * int(math.degrees((left_dist - right_dist)/ radius))) % 360
+	print left, right, time_spent.seconds(), math.degrees((left_dist - right_dist)/ radius)
 	print "Updating angle to: " + str(ang)
 	resp, content = h.request(ang_ip + str(ang).zfill(3) + '/')
 
@@ -65,19 +66,22 @@ def injectFault(cmds, fault):
     return cmd
 
 def sendCommand(connection, command):
-	global h, fault
+	global h, fault, last_command
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 	fire_ip = ip_addr + team + "/fire/"
 	cmd = ""
 
 	cmds = command.split('s')
 	if(cmds[0] == '145'):
 		if(fault == None):
-			print "Sending: " + command + " Fault Free"
+			if(command != '145s0s0s0s0'):
+			    print "Sending: " + command + " Fault Free"
 			for v in cmds:
 	            		cmd += chr(int(v))
+	        	update_angle()
+	        	last_command = command
     		else:
     			if(command != '145s0s0s0s0'):
     				print "Sending: " + command + " With Fault: " + str(fault)
@@ -95,11 +99,7 @@ def sendCommand(connection, command):
     	else:
     		print 'Docking: ' + str(cmds)
     		connection.write(chr(143))
-    		#docked = False
-    		#while(not docked):
-    		#	connection.write(chr(142) + chr(21))
-    		#	docked = (get8Unsigned(connection) != 0)
-       		return
+
 	
 	if(command != '145s0s0s0s0' and command != '142s20'):
 		print "Writing: " + str(cmd.split('\\'))
@@ -241,7 +241,7 @@ def main():
 	h = httplib2.Http(".cache")
 
 	ip_addr = "http://54.218.43.192/robot_tag/"
-	team = "1"
+	team = "2"
 
 	loc_ip = ip_addr + team +"/coords/"
 	add_coords_ip = ip_addr + team + "/add_coords/"
@@ -251,7 +251,8 @@ def main():
 	fault_ip = ip_addr + team + "/faults/"
 
 	#init serial connection
-	port = "/dev/ttyUSB0"
+	#port = "/dev/ttyUSB0"
+	port = "/dev/tty.usbserial-DA01NZOS"
 	connection = serial.Serial(port, baudrate=19200, timeout = 1)
 	sendCommand(connection, '128s131')
 
@@ -299,6 +300,7 @@ def main():
 		#grab command from server
 		resp, content = h.request(cmd_ip)
 		cmds = content.split()
+
 		if(int(cmds[2]) > cmd_served):
 			print "Received cmd: " + cmds[1]
 			cmd_served = int(cmds[2])
@@ -315,8 +317,7 @@ def main():
 
 			end = nanotime.now()
 			sendCommand(connection, cmd)
-			if(start != 0):
-				time_spent = end - start
+			old_start = start
 			start = nanotime.now()
 
 
@@ -326,7 +327,14 @@ def main():
 
 		#if no command then stop
 		else:
+			end = nanotime.now()
 			sendCommand(connection, '145s0s0s0s0')
+			old_start = start
+			start = nanotime.now()
+
+		if(old_start != 0):
+				time_spent = end - old_start
+
 
 		#check for fault
 		#detected_fault = isolateFault(cmd, detected_fault)
